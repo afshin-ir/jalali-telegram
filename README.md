@@ -16,7 +16,7 @@
 <h2 dir="rtl" align="right">دریافت نسخهٔ لینوکس</h2>
 
 <p dir="rtl" align="right">
-<a href="https://github.com/afshin-ir/jalali-telegram/releases/tag/v7.4.1">دریافت تلگرام جلالی ۷٫۴٫۱ برای لینوکس</a>
+<a href="https://github.com/afshin-ir/jalali-telegram/releases">دریافت تلگرام جلالی ۷٫۴٫۱ برای لینوکس</a>
 </p>
 
 <p dir="rtl" align="right">
