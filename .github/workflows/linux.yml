@@ -161,7 +161,7 @@ jobs:
           -D TDESKTOP_API_TEST=ON \
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
-          $DEFINE
+          $DEFINE 2>&1 | tee "$RUNNER_TEMP/telegram-build.log"
 
       - name: Count ccache misses.
         id: ccache-stats
@@ -216,3 +216,12 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: out/Debug/artifact/
           retention-days: 1
+
+      - name: Upload Linux build log.
+        if: always() && env.ONLY_CACHE == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Linux build log
+          path: ${{ runner.temp }}/telegram-build.log
+          if-no-files-found: warn
+          retention-days: 7
