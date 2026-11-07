@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_file_parser.h"
 #include "ui/integration.h"
 
+#include <QtCore/QCalendar>
 #include <QtCore/QLocale>
 
 namespace {
@@ -100,6 +101,42 @@ QString langDayOfMonth(const QDate &date) {
 			lt_day,
 			QString::number(day));
 	});
+}
+
+QString langJalaliDate(const QDate &date) {
+	const auto parts = QCalendar(QCalendar::System::Persian).partsFromDate(date);
+	const auto monthName = [&] {
+		switch (parts.month) {
+		case 1: return u"فروردین"_q;
+		case 2: return u"اردیبهشت"_q;
+		case 3: return u"خرداد"_q;
+		case 4: return u"تیر"_q;
+		case 5: return u"مرداد"_q;
+		case 6: return u"شهریور"_q;
+		case 7: return u"مهر"_q;
+		case 8: return u"آبان"_q;
+		case 9: return u"آذر"_q;
+		case 10: return u"دی"_q;
+		case 11: return u"بهمن"_q;
+		case 12: return u"اسفند"_q;
+		}
+		return u"ماه نامعتبر"_q;
+	}();
+	const auto persianDigits = [](QString value) {
+		for (auto digit = u'0'; digit <= u'9'; ++digit) {
+			value.replace(QChar(digit), QChar(0x06F0 + digit - u'0'));
+		}
+		return value;
+	};
+	return persianDigits(QString::number(parts.day))
+		+ u' ' + monthName
+		+ u' ' + persianDigits(QString::number(parts.year));
+}
+
+QString langJalaliDateTimeFull(const QDateTime &date) {
+	return langJalaliDate(date.date())
+		+ u' '
+		+ QLocale().toString(date.time(), QLocale::LongFormat);
 }
 
 QString langDayOfMonthFull(const QDate &date) {

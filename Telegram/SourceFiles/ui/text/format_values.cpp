@@ -122,7 +122,7 @@ QString FormatDateTimeSavedFrom(QDateTime dateTime) {
 			Lang::MonthSmall(date.month())(tr::now),
 			lt_day,
 			QString::number(date.day()))
-		: langDayOfMonthFull(date);
+		: langJalaliDate(date);
 
 	return tr::lng_mediaview_date_time(
 		tr::now,
@@ -735,7 +735,7 @@ QString FormatDialogsDate(const QDateTime &lastTime) {
 	} else if (std::abs(lastDate.daysTo(nowDate)) < 7) {
 		return langDayOfWeek(lastDate);
 	} else {
-		return QLocale().toString(lastDate, QLocale::ShortFormat);
+		return langJalaliDate(lastDate);
 	}
 }
 
