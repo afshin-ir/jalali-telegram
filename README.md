@@ -15,10 +15,10 @@
 
 <h2 dir="rtl" align="right">نمونه‌های نمایش تاریخ جلالی</h2>
 
-<p dir="rtl" align="right">تاریخ جداکنندهٔ روزها در گفت‌وگو:</p>
+<p dir="rtl" align="right">نمایش ماه‌ها و روزهای آن ماه:</p>
 <p align="center"><img src="docs/assets/jalali-message-date.png" alt="نمایش تاریخ جلالی کنار پیام" width="360"></p>
 
-<p dir="rtl" align="right">نمای ماه جلالی و شمارهٔ روزها در انتخابگر تاریخ:</p>
+<p dir="rtl" align="right">نمایش روز، ماه و سال در کنار هر پیام:</p>
 <p align="center"><img src="docs/assets/jalali-calendar.png" alt="تقویم جلالی با روزهای ماه" width="420"></p>
 
 <p dir="rtl" align="right">انتخاب ماه و سال جلالی:</p>
