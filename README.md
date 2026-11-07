@@ -13,6 +13,17 @@
 <li>زمان پیام مطابق ساعت محلی دستگاه نمایش داده می‌شود. تبدیل به جلالی فقط شکل نمایش تاریخ را عوض می‌کند و مقدار زمانی اصلی پیام حفظ می‌شود.</li>
 </ul>
 
+<h2 dir="rtl" align="right">نمونه‌های نمایش تاریخ جلالی</h2>
+
+<p dir="rtl" align="right">تاریخ جداکنندهٔ روزها در گفت‌وگو:</p>
+<p align="center"><img src="docs/assets/jalali-message-date.png" alt="نمایش تاریخ جلالی کنار پیام" width="360"></p>
+
+<p dir="rtl" align="right">نمای ماه جلالی و شمارهٔ روزها در انتخابگر تاریخ:</p>
+<p align="center"><img src="docs/assets/jalali-calendar.png" alt="تقویم جلالی با روزهای ماه" width="420"></p>
+
+<p dir="rtl" align="right">انتخاب ماه و سال جلالی:</p>
+<p align="center"><img src="docs/assets/jalali-month-year-picker.png" alt="انتخاب ماه و سال جلالی" width="420"></p>
+
 <h2 dir="rtl" align="right">دریافت نسخهٔ لینوکس</h2>
 
 <p dir="rtl" align="right">
