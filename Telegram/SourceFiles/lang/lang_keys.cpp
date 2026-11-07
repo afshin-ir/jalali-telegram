@@ -104,7 +104,7 @@ QString langDayOfMonth(const QDate &date) {
 }
 
 QString langJalaliDate(const QDate &date) {
-	const auto parts = QCalendar(QCalendar::System::Persian).partsFromDate(date);
+	const auto parts = QCalendar(QCalendar::System::Jalali).partsFromDate(date);
 	const auto monthName = [&] {
 		switch (parts.month) {
 		case 1: return u"فروردین"_q;
