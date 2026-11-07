@@ -19,8 +19,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Ui {
 namespace {
 
-constexpr auto kSecondsInYear = 365 * 24 * 60 * 60; // 31536000
-
 [[nodiscard]] QString FormatTenths(qint64 tenths) {
 	return QString::number(tenths / 10)
 		+ QLocale().decimalPoint()
@@ -113,16 +111,7 @@ QString FormatDateTimeSavedFrom(QDateTime dateTime) {
 	} else if (date == current.addDays(-1)) {
 		return tr::lng_mediaview_yesterday(tr::now, lt_time, timeStr);
 	}
-	const auto diff = std::abs(
-		base::unixtime::now() - base::unixtime::serialize(dateTime));
-	const auto dateStr = (diff < kSecondsInYear)
-		? tr::lng_month_day(
-			tr::now,
-			lt_month,
-			Lang::MonthSmall(date.month())(tr::now),
-			lt_day,
-			QString::number(date.day()))
-		: langJalaliDate(date);
+	const auto dateStr = langJalaliDate(date);
 
 	return tr::lng_mediaview_date_time(
 		tr::now,
