@@ -119,9 +119,19 @@ jobs:
           cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
 
       - name: Move cache.
+        id: move-cache
         run: |
           rm -rf ${{ runner.temp }}/.buildx-cache
           mv ${{ runner.temp }}/.buildx-cache{-new,}
+
+      - name: Save libraries cache.
+        if: always() && steps.cache-libs.outputs.cache-hit != 'true' && steps.move-cache.outcome == 'success'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ runner.temp }}/.buildx-cache
+            ${{ runner.temp }}/.mount-cache
+          key: ${{ runner.OS }}-libs-${{ hashFiles('Telegram/build/docker/centos_env/**') }}
 
       - name: Restore Telegram Desktop cache.
         id: cache-tdesktop
@@ -135,6 +145,7 @@ jobs:
       - name: Telegram Desktop build.
         if: env.ONLY_CACHE == 'false'
         run: |
+          set -o pipefail
           DEFINE=""
           if [ -n "${{ matrix.defines }}" ]; then
             DEFINE="-D ${{ matrix.defines }}=ON"
@@ -158,7 +169,7 @@ jobs:
           -D CMAKE_C_FLAGS_DEBUG="-O0 -fpch-preprocess" \
           -D CMAKE_CXX_FLAGS_DEBUG="-O0 -fpch-preprocess" \
           -D CMAKE_COMPILE_WARNING_AS_ERROR=ON \
-          -D TDESKTOP_API_TEST=ON \
+          -D TDESKTOP_API_TEST=OFF \
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
           $DEFINE 2>&1 | tee "$RUNNER_TEMP/telegram-build.log"
