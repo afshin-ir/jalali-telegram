@@ -835,7 +835,7 @@ QDateTime ItemDateTime(not_null<const HistoryItem*> item) {
 }
 
 QString ItemDateText(not_null<const HistoryItem*> item, bool isUntilOnline) {
-	const auto dateText = langDayOfMonthFull(ItemDateTime(item).date());
+	const auto dateText = langJalaliDate(ItemDateTime(item).date());
 	return !item->isScheduled()
 		? dateText
 		: isUntilOnline

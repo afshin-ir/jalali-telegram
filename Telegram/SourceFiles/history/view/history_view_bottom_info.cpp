@@ -78,7 +78,7 @@ namespace {
 	return tr::lng_edited_on(
 		tr::now,
 		lt_date,
-		langDayOfMonthShort(edited.date()),
+		langJalaliDate(edited.date()),
 		lt_time,
 		time);
 }
