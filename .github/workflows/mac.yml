@@ -11,11 +11,12 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'Telegram/SourceFiles/lang/lang_keys.cpp'
       - 'changelog.txt'
       - 'LEGAL'
       - 'LICENSE'
       - '.github/**'
-      - '!.github/workflows/mac.yml'
+
       - 'lib/xdg/**'
       - 'snap/**'
       - 'Telegram/build/docker/**'
@@ -28,11 +29,12 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'Telegram/SourceFiles/lang/lang_keys.cpp'
       - 'changelog.txt'
       - 'LEGAL'
       - 'LICENSE'
       - '.github/**'
-      - '!.github/workflows/mac.yml'
+
       - 'lib/xdg/**'
       - 'snap/**'
       - 'Telegram/build/docker/**'

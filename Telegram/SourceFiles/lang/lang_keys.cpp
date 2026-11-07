@@ -128,9 +128,12 @@ QString langJalaliDate(const QDate &date) {
 		}
 		return value;
 	};
-	return persianDigits(QString::number(parts.day))
+	auto result = persianDigits(QString::number(parts.day))
 		+ u' ' + monthName
 		+ u' ' + persianDigits(QString::number(parts.year));
+	result.prepend(QChar(0x2067)); // Right-to-left isolate.
+	result.append(QChar(0x2069)); // Pop directional isolate.
+	return result;
 }
 
 QString langJalaliDateTimeFull(const QDateTime &date) {

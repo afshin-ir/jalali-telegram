@@ -11,12 +11,13 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'Telegram/SourceFiles/lang/lang_keys.cpp'
       - '!docs/building-win*.md'
       - 'changelog.txt'
       - 'LEGAL'
       - 'LICENSE'
       - '.github/**'
-      - '!.github/workflows/win.yml'
+
       - 'lib/xdg/**'
       - 'snap/**'
       - 'Telegram/build/docker/**'
@@ -30,12 +31,13 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+      - 'Telegram/SourceFiles/lang/lang_keys.cpp'
       - '!docs/building-win*.md'
       - 'changelog.txt'
       - 'LEGAL'
       - 'LICENSE'
       - '.github/**'
-      - '!.github/workflows/win.yml'
+
       - 'lib/xdg/**'
       - 'snap/**'
       - 'Telegram/build/docker/**'
