@@ -27,10 +27,67 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_settings.h"
 #include "styles/style_layers.h"
 
+#include <QtCore/QCalendar>
 #include <QtCore/QLocale>
 
 namespace Ui {
 namespace {
+
+const QCalendar &JalaliCalendar() {
+	static const auto result = QCalendar(QCalendar::System::Jalali);
+	return result;
+}
+
+QString PersianDigits(QString value) {
+	for (auto digit = u'0'; digit <= u'9'; ++digit) {
+		value.replace(QChar(digit), QChar(0x06F0 + digit - u'0'));
+	}
+	return value;
+}
+
+QString JalaliMonthName(int month) {
+	switch (month) {
+	case 1: return u"فروردین"_q;
+	case 2: return u"اردیبهشت"_q;
+	case 3: return u"خرداد"_q;
+	case 4: return u"تیر"_q;
+	case 5: return u"مرداد"_q;
+	case 6: return u"شهریور"_q;
+	case 7: return u"مهر"_q;
+	case 8: return u"آبان"_q;
+	case 9: return u"آذر"_q;
+	case 10: return u"دی"_q;
+	case 11: return u"بهمن"_q;
+	case 12: return u"اسفند"_q;
+	}
+	return u"ماه نامعتبر"_q;
+}
+
+QString JalaliMonthYear(QDate date) {
+	const auto parts = JalaliCalendar().partsFromDate(date);
+	return JalaliMonthName(parts.month)
+		+ u' '
+		+ PersianDigits(QString::number(parts.year));
+}
+
+QDate JalaliMonthStart(QDate date) {
+	const auto parts = JalaliCalendar().partsFromDate(date);
+	return JalaliCalendar().dateFromParts(parts.year, parts.month, 1);
+}
+
+QDate JalaliMonthShift(QDate date, int shift) {
+	auto parts = JalaliCalendar().partsFromDate(date);
+	parts.month += shift;
+	while (parts.month < 1) {
+		parts.month += 12;
+		--parts.year;
+	}
+	while (parts.month > 12) {
+		parts.month -= 12;
+		++parts.year;
+	}
+	return JalaliCalendar().dateFromParts(parts.year, parts.month, 1);
+}
 
 constexpr auto kDaysInWeek = 7;
 constexpr auto kThumbnailsPerPaint = 4;
@@ -75,24 +132,31 @@ void FillMonthYearPicker(
 
 	const auto effectiveMaxDate = maxDate.isValid()
 		? maxDate
-		: QDate::currentDate().addDays(365);
-	const auto minYear = minDate.isValid() ? minDate.year() : 2013;
-	const auto maxYear = effectiveMaxDate.year();
+		: JalaliMonthShift(QDate::currentDate(), 13);
+	const auto minParts = JalaliCalendar().partsFromDate(minDate.isValid()
+		? minDate
+		: JalaliCalendar().dateFromParts(1392, 1, 1));
+	const auto maxParts = JalaliCalendar().partsFromDate(effectiveMaxDate);
+	const auto currentParts = JalaliCalendar().partsFromDate(current);
+	const auto minYear = minParts.year;
+	const auto maxYear = maxParts.year;
 	const auto yearsCount = maxYear - minYear + 1;
-	const auto yearsStartIndex = current.year() - minYear;
+	const auto yearsStartIndex = currentParts.year - minYear;
 	const auto yearsPaint = [=](QPainter &p, QRectF rect, int index) {
-		p.drawText(rect, QString::number(minYear + index), style::al_center);
+		p.drawText(rect, PersianDigits(QString::number(minYear + index)), style::al_center);
 	};
 	const auto years = picker(yearsCount, yearsStartIndex, yearsPaint);
 
 	const auto monthsRange = [=](int year) {
 		auto minMonth = 1;
 		auto maxMonth = 12;
-		if (minDate.isValid() && minDate.year() == year) {
-			minMonth = minDate.month();
+		if (minDate.isValid()) {
+			const auto parts = JalaliCalendar().partsFromDate(minDate);
+			if (parts.year == year) minMonth = parts.month;
 		}
-		if (maxDate.isValid() && maxDate.year() == year) {
-			maxMonth = maxDate.month();
+		if (maxDate.isValid()) {
+			const auto parts = JalaliCalendar().partsFromDate(maxDate);
+			if (parts.year == year) maxMonth = parts.month;
 		}
 		return std::make_pair(minMonth, maxMonth);
 	};
@@ -104,16 +168,16 @@ void FillMonthYearPicker(
 	};
 	const auto state = box->lifetime().make_state<State>();
 
-	const auto [minMonth, maxMonth] = monthsRange(current.year());
+	const auto [minMonth, maxMonth] = monthsRange(currentParts.year);
 	const auto monthsCount = maxMonth - minMonth + 1;
-	const auto monthsStartIndex = current.month() - minMonth;
+	const auto monthsStartIndex = currentParts.month - minMonth;
 	const auto monthsPaint = [=, minMonth = minMonth](
 			QPainter &p,
 			QRectF rect,
 			int index) {
 		p.drawText(
 			rect,
-			Lang::Month(minMonth + index)(tr::now),
+			JalaliMonthName(minMonth + index),
 			style::al_center);
 	};
 	state->months = base::unique_qptr<VerticalDrumPicker>(
@@ -141,7 +205,7 @@ void FillMonthYearPicker(
 					int index) {
 				p.drawText(
 					rect,
-					Lang::Month(minMonth + index)(tr::now),
+					JalaliMonthName(minMonth + index),
 					style::al_center);
 			};
 			state->months = base::unique_qptr<VerticalDrumPicker>(
@@ -184,7 +248,7 @@ void FillMonthYearPicker(
 		const auto year = minYear + years->index();
 		const auto [minMonth, maxMonth] = monthsRange(year);
 		const auto month = minMonth + state->months->index();
-		done(QDate(year, month, 1));
+		done(JalaliCalendar().dateFromParts(year, month, 1));
 		box->closeBox();
 	});
 	box->addButton(tr::lng_cancel(), [=] { box->closeBox(); });
@@ -313,20 +377,20 @@ void CalendarBox::Context::setAllowsSelection(bool allows) {
 }
 
 void CalendarBox::Context::showMonth(QDate month) {
-	if (month.day() != 1) {
-		month = QDate(month.year(), month.month(), 1);
-	}
+	month = JalaliMonthStart(month);
 	applyMonth(month);
 }
 
 bool CalendarBox::Context::showsMonthOf(QDate date) const {
-	const auto shown = _month.current();
-	return (shown.year() == date.year()) && (shown.month() == date.month());
+	const auto shown = JalaliCalendar().partsFromDate(_month.current());
+	const auto parts = JalaliCalendar().partsFromDate(date);
+	return (shown.year == parts.year) && (shown.month == parts.month);
 }
 
 void CalendarBox::Context::applyMonth(const QDate &month, bool forced) {
 	const auto was = _month.current();
-	_daysCount = month.daysInMonth();
+	const auto parts = JalaliCalendar().partsFromDate(month);
+	_daysCount = JalaliCalendar().daysInMonth(parts.month, parts.year);
 	_daysShift = DaysShiftForMonth(month, _min, _firstDayOfWeek);
 	_rowsCount = RowsCountForMonth(month, _min, _max, _firstDayOfWeek);
 	_highlightedIndex = month.daysTo(_highlighted);
@@ -353,18 +417,7 @@ void CalendarBox::Context::applyMonth(const QDate &month, bool forced) {
 }
 
 void CalendarBox::Context::skipMonth(int skip) {
-	auto year = _month.current().year();
-	auto month = _month.current().month();
-	month += skip;
-	while (month < 1) {
-		--year;
-		month += 12;
-	}
-	while (month > 12) {
-		++year;
-		month -= 12;
-	}
-	showMonth(QDate(year, month, 1));
+	showMonth(JalaliMonthShift(_month.current(), skip));
 }
 
 int CalendarBox::Context::DaysShiftForMonth(
@@ -383,9 +436,7 @@ int CalendarBox::Context::DaysShiftForMonth(
 	} else if (min >= month) {
 		return from;
 	}
-	if (min.day() != 1) {
-		min = QDate(min.year(), min.month(), 1);
-	}
+	min = JalaliMonthStart(min);
 	const auto add = min.daysTo(month)
 		- inWeekIndex
 		+ DayOfWeekIndex(min, firstDayOfWeek);
@@ -400,46 +451,28 @@ int CalendarBox::Context::RowsCountForMonth(
 	Expects(!month.isNull());
 
 	const auto daysShift = DaysShiftForMonth(month, min, firstDayOfWeek);
-	const auto daysCount = month.daysInMonth();
+	const auto parts = JalaliCalendar().partsFromDate(month);
+	const auto daysCount = JalaliCalendar().daysInMonth(parts.month, parts.year);
 	const auto cellsCount = daysShift + daysCount;
 	auto result = (cellsCount / kDaysInWeek);
 	if (cellsCount % kDaysInWeek) {
 		++result;
 	}
 	if (max.isNull()) {
-		max = month.addYears(1);
+		max = JalaliMonthShift(month, 12);
 	}
-	if (max < month.addMonths(1)) {
+	if (max < JalaliMonthShift(month, 1)) {
 		return result;
 	}
-	if (max.day() != 1) {
-		max = QDate(max.year(), max.month(), 1);
-	}
-	max = max.addMonths(1);
+	max = JalaliMonthStart(max);
+	max = JalaliMonthShift(max, 1);
 	max = max.addDays(-DayOfWeekIndex(max, firstDayOfWeek));
 	const auto cellsFull = daysShift + (month.day() - 1) + month.daysTo(max);
 	return cellsFull / kDaysInWeek;
 }
 
 QDate CalendarBox::Context::dateFromIndex(int index) const {
-	constexpr auto kMonthsCount = 12;
-	auto month = _month.current().month();
-	auto year = _month.current().year();
-	while (index < 0) {
-		if (!--month) {
-			month += kMonthsCount;
-			--year;
-		}
-		index += QDate(year, month, 1).daysInMonth();
-	}
-	for (auto maxIndex = QDate(year, month, 1).daysInMonth(); index >= maxIndex; maxIndex = QDate(year, month, 1).daysInMonth()) {
-		index -= maxIndex;
-		if (month++ == kMonthsCount) {
-			month -= kMonthsCount;
-			++year;
-		}
-	}
-	return QDate(year, month, index + 1);
+	return _month.current().addDays(index);
 }
 
 QString CalendarBox::Context::labelFromIndex(int index) const {
@@ -447,9 +480,9 @@ QString CalendarBox::Context::labelFromIndex(int index) const {
 		if (index >= 0 && index < daysCount()) {
 			return index + 1;
 		}
-		return dateFromIndex(index).day();
+		return JalaliCalendar().partsFromDate(dateFromIndex(index)).day;
 	};
-	return QString::number(day());
+	return PersianDigits(QString::number(day()));
 }
 
 void CalendarBox::Context::toggleSelectionMode(bool enabled) {
@@ -618,7 +651,7 @@ CalendarBox::FloatingDate::FloatingDate(
 		st::roundedBg)) {
 	_context->monthValue(
 	) | rpl::on_next([=](QDate month) {
-		_text = langMonthOfYearFull(month.month(), month.year());
+		_text = JalaliMonthYear(month);
 		const auto width = st::msgServiceFont->width(_text);
 		const auto rect = QRect(0, 0, width, st::msgServiceFont->height);
 		_widget.resize(rect.marginsAdded(st::msgServicePadding).size());
@@ -720,9 +753,10 @@ void CalendarBox::Inner::loadDynamicImages() {
 	}
 	const auto currentMonth = _context->month();
 	for (const auto shift : { 0, -1, 1 }) {
-		const auto month = currentMonth.addMonths(shift);
+		const auto month = JalaliMonthShift(currentMonth, shift);
+		const auto parts = JalaliCalendar().partsFromDate(month);
 		const auto first = currentMonth.daysTo(month);
-		const auto last = first + month.daysInMonth() - 1;
+		const auto last = first + JalaliCalendar().daysInMonth(parts.month, parts.year) - 1;
 		if (last < _context->minDayIndex()
 			|| first > _context->maxDayIndex()) {
 			continue;
@@ -741,8 +775,8 @@ void CalendarBox::Inner::loadDynamicImages() {
 
 void CalendarBox::Inner::releaseDistantImages() {
 	const auto current = _context->month();
-	const auto from = current.addMonths(-kKeepMonthsAround);
-	const auto till = current.addMonths(kKeepMonthsAround + 1);
+	const auto from = JalaliMonthShift(current, -kKeepMonthsAround);
+	const auto till = JalaliMonthShift(current, kKeepMonthsAround + 1);
 	const auto release = [](auto from, auto till) {
 		for (auto i = from; i != till; ++i) {
 			if (i->second.subscribed) {
@@ -1187,7 +1221,7 @@ CalendarBox::Title::Title(
 }
 
 void CalendarBox::Title::setTextFromMonth(QDate month) {
-	setText(langMonthOfYearFull(month.month(), month.year()));
+	setText(JalaliMonthYear(month));
 }
 
 void CalendarBox::Title::setText(QString text) {
@@ -1477,7 +1511,7 @@ void CalendarBox::processScroll() {
 		return;
 	}
 	const auto wasFirst = _context->dateFromIndex(-wasShift);
-	const auto month = QDate(date.year(), date.month(), 1);
+	const auto month = JalaliMonthStart(date);
 	_watchScroll = false;
 	_context->showMonth(month);
 	const auto nowShift = _context->daysShift();

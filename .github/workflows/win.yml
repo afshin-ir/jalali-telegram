@@ -12,6 +12,8 @@ on:
       - 'docs/**'
       - '**.md'
       - 'Telegram/SourceFiles/lang/lang_keys.cpp'
+      - 'Telegram/SourceFiles/ui/boxes/calendar_box.cpp'
+      - 'Telegram/SourceFiles/ui/boxes/choose_date_time.cpp'
       - '!docs/building-win*.md'
       - 'changelog.txt'
       - 'LEGAL'
