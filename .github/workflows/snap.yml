@@ -19,6 +19,7 @@ on:
       - 'Telegram/SourceFiles/data/data_birthday.cpp'
       - 'Telegram/SourceFiles/info/profile/info_profile_values.cpp'
       - 'Telegram/SourceFiles/settings/sections/settings_active_sessions.cpp'
+      - 'Telegram/SourceFiles/data/data_peer_values.cpp'
       - 'Telegram/SourceFiles/ui/boxes/edit_birthday_box.cpp'
       - 'changelog.txt'
       - 'LEGAL'

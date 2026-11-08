@@ -511,7 +511,7 @@ QString OnlineText(Data::LastseenStatus status, TimeId now) {
 		const auto onlineTime = locale.toString(onlineFull.time(), QLocale::ShortFormat);
 		return tr::lng_status_lastseen_yesterday(tr::now, lt_time, onlineTime);
 	}
-	const auto date = locale.toString(onlineFull.date(), QLocale::ShortFormat);
+	const auto date = langJalaliDate(onlineFull.date());
 	return tr::lng_status_lastseen_date(tr::now, lt_date, date);
 }
 
@@ -539,7 +539,7 @@ QString OnlineTextFull(not_null<UserData*> user, TimeId now) {
 		const auto onlineTime = locale.toString(onlineFull.time(), QLocale::ShortFormat);
 		return tr::lng_status_lastseen_yesterday(tr::now, lt_time, onlineTime);
 	}
-	const auto date = locale.toString(onlineFull.date(), QLocale::ShortFormat);
+	const auto date = langJalaliDate(onlineFull.date());
 	const auto time = locale.toString(onlineFull.time(), QLocale::ShortFormat);
 	return tr::lng_status_lastseen_date_time(tr::now, lt_date, date, lt_time, time);
 }
