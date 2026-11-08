@@ -77,7 +77,6 @@ void EditBirthdayBox(
 		Data::Birthday::kYearMin,
 		1,
 		1));
-	const auto nowParts = calendar.partsFromDate(nowDate);
 	const auto currentParts = calendar.partsFromDate(currentDate);
 	const auto maxYear = maxParts.year;
 	const auto minYear = minParts.year;
