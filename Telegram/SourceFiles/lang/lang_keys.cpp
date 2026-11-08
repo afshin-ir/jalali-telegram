@@ -103,7 +103,7 @@ QString langDayOfMonth(const QDate &date) {
 	});
 }
 
-QString langJalaliDate(const QDate &date) {
+QString langJalaliDate(const QDate &date, bool includeYear) {
 	const auto parts = QCalendar(QCalendar::System::Jalali).partsFromDate(date);
 	const auto monthName = [&] {
 		switch (parts.month) {
@@ -129,8 +129,10 @@ QString langJalaliDate(const QDate &date) {
 		return value;
 	};
 	auto result = persianDigits(QString::number(parts.day))
-		+ u' ' + monthName
-		+ u' ' + persianDigits(QString::number(parts.year));
+		+ u' ' + monthName;
+	if (includeYear) {
+		result += u' ' + persianDigits(QString::number(parts.year));
+	}
 	result.prepend(QChar(0x2067)); // Right-to-left isolate.
 	result.append(QChar(0x2069)); // Pop directional isolate.
 	return result;

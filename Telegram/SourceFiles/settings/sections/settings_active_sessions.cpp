@@ -440,7 +440,7 @@ void SessionInfoBox(
 		object_ptr<Ui::FlatLabel>(
 			box,
 			rpl::single(
-				langDateTimeFull(base::unixtime::parse(data.activeTime))),
+				langJalaliDateTimeFull(base::unixtime::parse(data.activeTime))),
 			st::sessionDateLabel),
 		style::margins(0, 0, 0, st::sessionDateSkip),
 		style::al_top);

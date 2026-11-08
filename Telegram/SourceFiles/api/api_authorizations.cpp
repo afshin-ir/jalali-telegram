@@ -260,7 +260,7 @@ QString Authorizations::ActiveDateString(TimeId active) {
 		: (lastDate.year() == nowDate.year()
 			&& lastDate.weekNumber() == nowDate.weekNumber())
 		? langDayOfWeek(lastDate)
-		: QLocale().toString(lastDate, QLocale::ShortFormat);
+		: langJalaliDate(lastDate);
 }
 
 int Authorizations::total() const {

@@ -70,25 +70,16 @@ int Birthday::year() const {
 }
 
 QString BirthdayText(Birthday date, bool fullMonth) {
-	const auto wrapMonth = fullMonth
-		? Lang::MonthDay
-		: Lang::MonthSmall;
+	Q_UNUSED(fullMonth);
 	if (const auto year = date.year()) {
-		return tr::lng_month_day_year(
-			tr::now,
-			lt_month,
-			wrapMonth(date.month())(tr::now),
-			lt_day,
-			QString::number(date.day()),
-			lt_year,
-			QString::number(year));
+		return langJalaliDate(QDate(year, date.month(), date.day()));
 	} else if (date) {
-		return tr::lng_month_day(
-			tr::now,
-			lt_month,
-			wrapMonth(date.month())(tr::now),
-			lt_day,
-			QString::number(date.day()));
+		auto referenceYear = QDate::currentDate().year();
+		auto reference = QDate(referenceYear, date.month(), date.day());
+		while (!reference.isValid()) {
+			reference = QDate(--referenceYear, date.month(), date.day());
+		}
+		return langJalaliDate(reference, false);
 	}
 	return QString();
 }

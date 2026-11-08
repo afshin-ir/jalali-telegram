@@ -16,6 +16,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h"
 #include "styles/style_settings.h"
 
+#include <QtCore/QCalendar>
 #include <QtCore/QDate>
 
 namespace Ui {
@@ -52,23 +53,66 @@ void EditBirthdayBox(
 			startIndex);
 	};
 
+	const auto calendar = QCalendar(QCalendar::System::Jalali);
 	const auto nowDate = QDate::currentDate();
-	const auto nowYear = nowDate.year();
-	const auto nowMonth = nowDate.month();
-	const auto nowDay = nowDate.day();
-	const auto now = Data::Birthday(nowDay, nowMonth, nowYear);
-	const auto max = current.year() ? std::max(now, current) : now;
-	const auto maxYear = max.year();
-	const auto minYear = Data::Birthday::kYearMin;
+	const auto unknownYearReference = 1399;
+	const auto referenceDate = [&](int month, int day) {
+		auto year = nowDate.year();
+		auto result = QDate(year, month, day);
+		while (!result.isValid()) {
+			result = QDate(--year, month, day);
+		}
+		return result;
+	};
+	const auto currentDate = current.year()
+		? QDate(current.year(), current.month(), current.day())
+		: current
+		? referenceDate(current.month(), current.day())
+		: nowDate;
+	const auto maxDate = current.year()
+		? std::max(nowDate, currentDate)
+		: nowDate;
+	const auto maxParts = calendar.partsFromDate(maxDate);
+	const auto minParts = calendar.partsFromDate(QDate(
+		Data::Birthday::kYearMin,
+		1,
+		1));
+	const auto nowParts = calendar.partsFromDate(nowDate);
+	const auto currentParts = calendar.partsFromDate(currentDate);
+	const auto maxYear = maxParts.year;
+	const auto minYear = minParts.year;
 	const auto yearsCount = (maxYear - minYear + 2); // Last - not set.
 	const auto yearsStartIndex = current.year()
-		? (current.year() - minYear)
+		? (currentParts.year - minYear)
 		: (yearsCount - 1);
+	const auto persianDigits = [](QString value) {
+		for (auto digit = u'0'; digit <= u'9'; ++digit) {
+			value.replace(QChar(digit), QChar(0x06F0 + digit - u'0'));
+		}
+		return value;
+	};
+	const auto monthName = [](int month) {
+		switch (month) {
+		case 1: return u"فروردین"_q;
+		case 2: return u"اردیبهشت"_q;
+		case 3: return u"خرداد"_q;
+		case 4: return u"تیر"_q;
+		case 5: return u"مرداد"_q;
+		case 6: return u"شهریور"_q;
+		case 7: return u"مهر"_q;
+		case 8: return u"آبان"_q;
+		case 9: return u"آذر"_q;
+		case 10: return u"دی"_q;
+		case 11: return u"بهمن"_q;
+		case 12: return u"اسفند"_q;
+		}
+		return u"ماه نامعتبر"_q;
+	};
 	const auto yearsPaint = [=](QPainter &p, QRectF rect, int index) {
 		p.drawText(
 			rect,
 			(index < yearsCount - 1
-				? QString::number(minYear + index)
+				? persianDigits(QString::number(minYear + index))
 				: QString::fromUtf8("\xe2\x80\x94")),
 			style::al_center);
 	};
@@ -77,6 +121,7 @@ void EditBirthdayBox(
 	struct State {
 		rpl::variable<Ui::VerticalDrumPicker*> months;
 		rpl::variable<Ui::VerticalDrumPicker*> days;
+		int firstMonth = 1;
 	};
 	const auto state = content->lifetime().make_state<State>();
 
@@ -105,21 +150,25 @@ void EditBirthdayBox(
 		const auto year = (yearsIndex == yearsCount - 1)
 			? 0
 			: minYear + yearsIndex;
-		const auto monthsCount = (year == maxYear)
-			? max.month()
+		const auto firstMonth = (year == minYear)
+			? minParts.month
+			: 1;
+		const auto lastMonth = (year == maxYear)
+			? maxParts.month
 			: 12;
+		const auto monthsCount = lastMonth - firstMonth + 1;
+		const auto oldMonth = state->months.current()
+			? state->firstMonth + state->months.current()->index()
+			: currentParts.month;
 		const auto monthsStartIndex = std::clamp(
-			(state->months.current()
-				? state->months.current()->index()
-				: current.month()
-				? (current.month() - 1)
-				: (now.month() - 1)),
+			oldMonth - firstMonth,
 			0,
 			monthsCount - 1);
+		state->firstMonth = firstMonth;
 		const auto monthsPaint = [=](QPainter &p, QRectF rect, int index) {
 			p.drawText(
 				rect,
-				Lang::Month(index + 1)(tr::now),
+				monthName(firstMonth + index),
 				style::al_center);
 		};
 		const auto updated = picker(
@@ -134,34 +183,34 @@ void EditBirthdayBox(
 	Ui::SendPendingMoveResizeEvents(state->months.current());
 
 	state->months.value() | rpl::map([=](Ui::VerticalDrumPicker *picker) {
-		return picker ? picker->value() : rpl::single(current.month()
-			? (current.month() - 1)
-			: (now.month() - 1));
+		return picker ? picker->value() : rpl::single(currentParts.month
+			- state->firstMonth);
 	}) | rpl::flatten_latest() | rpl::on_next([=](int monthIndex) {
-		const auto month = monthIndex + 1;
+		const auto month = state->firstMonth + monthIndex;
 		const auto yearsIndex = years->index();
 		const auto year = (yearsIndex == yearsCount - 1)
 			? 0
 			: minYear + yearsIndex;
-		const auto daysCount = (year == maxYear && month == max.month())
-			? max.day()
-			: (month == 2)
-			? ((!year || (!(year % 4) && ((year % 100) || !(year % 400))))
-				? 29
-				: 28)
-			: ((month == 4) || (month == 6) || (month == 9) || (month == 11))
-			? 30
-			: 31;
+		const auto calendarYear = year ? year : unknownYearReference;
+		auto daysCount = calendar.daysInMonth(month, calendarYear);
+		if (year == maxYear && month == maxParts.month) {
+			daysCount = std::min(daysCount, maxParts.day);
+		}
+		const auto firstDay = (year == minYear && month == minParts.month)
+			? minParts.day
+			: 1;
+		const auto oldDay = state->days.current()
+			? state->days.current()->index() + 1
+			: currentParts.day;
 		const auto daysStartIndex = std::clamp(
-			(state->days.current()
-				? state->days.current()->index()
-				: current.day()
-				? (current.day() - 1)
-				: (now.day() - 1)),
-			0,
+			oldDay - 1,
+			firstDay - 1,
 			daysCount - 1);
 		const auto daysPaint = [=](QPainter &p, QRectF rect, int index) {
-			p.drawText(rect, QString::number(index + 1), style::al_center);
+			p.drawText(
+				rect,
+				persianDigits(QString::number(index + 1)),
+				style::al_center);
 		};
 		const auto updated = picker(
 			daysCount,
@@ -171,6 +220,8 @@ void EditBirthdayBox(
 		state->days = updated;
 		state->days.current()->show();
 	}, years->lifetime());
+
+	Ui::SendPendingMoveResizeEvents(state->months.current());
 
 	content->paintRequest(
 	) | rpl::on_next([=](const QRect &r) {
@@ -198,12 +249,19 @@ void EditBirthdayBox(
 		? tr::lng_suggest_birthday_box_confirm()
 		: tr::lng_settings_save();
 	box->addButton(std::move(confirmText), [=] {
+		const auto year = (years->index() == yearsCount - 1)
+			? 0
+			: minYear + years->index();
+		const auto month = state->firstMonth
+			+ state->months.current()->index();
+		const auto date = calendar.dateFromParts(
+			year ? year : unknownYearReference,
+			month,
+			state->days.current()->index() + 1);
 		const auto result = Data::Birthday(
-			state->days.current()->index() + 1,
-			state->months.current()->index() + 1,
-			((years->index() == yearsCount - 1)
-				? 0
-				: minYear + years->index()));
+			date.day(),
+			date.month(),
+			year ? date.year() : 0);
 		box->closeBox();
 		save(result);
 	});
