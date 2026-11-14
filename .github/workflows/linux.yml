@@ -234,35 +234,35 @@ jobs:
 
           key_file="$RUNNER_TEMP/jalali-update-signing-key.pem"
           trap 'rm -f "$key_file"' EXIT
-          printf '%s\\n' "$JALALI_UPDATE_SIGNING_KEY" > "$key_file"
+          printf '%s\n' "$JALALI_UPDATE_SIGNING_KEY" > "$key_file"
           chmod 600 "$key_file"
 
-          version=$(sed -n 's/^constexpr auto AppVersion = \\([0-9][0-9]*\\);/\\1/p' Telegram/SourceFiles/core/version.h)
-          app_version=$(sed -n 's/^constexpr auto AppVersionStr = "\\([^"]*\\)";/\\1/p' Telegram/SourceFiles/core/version.h)
+          version=$(sed -n 's/^constexpr auto AppVersion = \([0-9][0-9]*\);/\1/p' Telegram/SourceFiles/core/version.h)
+          app_version=$(sed -n 's/^constexpr auto AppVersionStr = "\([^"]*\)";/\1/p' Telegram/SourceFiles/core/version.h)
           tag_version="${GITHUB_REF_NAME#v}"
           if [ "$version" = "" ] || [ "$app_version" != "$tag_version" ]; then
             echo "::error::Tag $GITHUB_REF_NAME must match AppVersionStr ($app_version)."
             exit 1
           fi
 
-          out/Debug/Packer \\
-            -path out/Debug/artifact \\
-            -version "$version" \\
-            -channel stable \\
-            -keys-loc Telegram/Resources/update \\
-            -local-key "$key_file" \\
+          out/Debug/Packer \
+            -path out/Debug/artifact \
+            -version "$version" \
+            -channel stable \
+            -keys-loc Telegram/Resources/update \
+            -local-key "$key_file" \
             -local-key-id jalali-linux-1
 
           package="td-update-linux-x64-$version"
           test -s "$package"
           feed="$RUNNER_TEMP/current"
-          printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\\n' "$version" "$package" > "$feed"
+          printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\n' "$version" "$package" > "$feed"
 
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "$feed" "$package" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" "$feed" "$package" \\
-              --title "Telegram Desktop $app_version (Jalali Linux)" \\
+            gh release create "$GITHUB_REF_NAME" "$feed" "$package" \
+              --title "Telegram Desktop $app_version (Jalali Linux)" \
               --notes "نسخهٔ لینوکس تلگرام دسکتاپ با به‌روزرسانی امضاشده از مخزن جلالی."
           fi
 
