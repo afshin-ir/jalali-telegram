@@ -2,8 +2,6 @@ name: Linux.
 
 on:
   push:
-    tags:
-      - 'v*'
     # Pushes to the canary or private-ci branches run their own workflows.
     branches-ignore:
       - public-canary
@@ -220,8 +218,8 @@ jobs:
           path: out/Debug/artifact/
           retention-days: 1
 
-      - name: Build signed update and publish release.
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Build signed update and publish rolling release.
+        if: github.ref == 'refs/heads/dev'
         env:
           GH_TOKEN: ${{ github.token }}
           JALALI_UPDATE_SIGNING_KEY: ${{ secrets.JALALI_UPDATE_SIGNING_KEY }}
@@ -239,9 +237,8 @@ jobs:
 
           version=$(sed -n 's/^constexpr auto AppVersion = \([0-9][0-9]*\);/\1/p' Telegram/SourceFiles/core/version.h)
           app_version=$(sed -n 's/^constexpr auto AppVersionStr = "\([^"]*\)";/\1/p' Telegram/SourceFiles/core/version.h)
-          tag_version="${GITHUB_REF_NAME#v}"
-          if [ "$version" = "" ] || [ "$app_version" != "$tag_version" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME must match AppVersionStr ($app_version)."
+          if [ "$version" = "" ]; then
+            echo "::error::Could not read AppVersion from Telegram/SourceFiles/core/version.h."
             exit 1
           fi
 
@@ -258,12 +255,12 @@ jobs:
           feed="$RUNNER_TEMP/current"
           printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\n' "$version" "$package" > "$feed"
 
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "$feed" "$package" --clobber
+          if gh release view jalali-latest >/dev/null 2>&1; then
+            gh release upload jalali-latest "$feed" "$package" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" "$feed" "$package" \
+            gh release create jalali-latest "$feed" "$package" \
               --title "Telegram Desktop $app_version (Jalali Linux)" \
-              --notes "نسخهٔ لینوکس تلگرام دسکتاپ با به‌روزرسانی امضاشده از مخزن جلالی."
+              --notes "Latest signed Linux build of the Jalali Telegram Desktop fork."
           fi
 
       - name: Save Telegram Desktop cache.

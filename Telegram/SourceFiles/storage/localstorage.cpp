@@ -547,7 +547,7 @@ const QString &readAutoupdatePrefixRaw() {
 
 #ifdef TDESKTOP_JALALI_UPDATES
 	return AutoupdatePrefix(
-		"https://github.com/afshin-ir/jalali-telegram/releases/latest/download");
+		"https://github.com/afshin-ir/jalali-telegram/releases/download/jalali-latest");
 #else
 	const auto &result = AutoupdatePrefix();
 	if (!result.isEmpty()) {
