@@ -47,6 +47,13 @@ on:
       - 'Telegram/Telegram.plist'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: linux-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   linux:
