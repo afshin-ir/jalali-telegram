@@ -2,10 +2,9 @@ name: Snap.
 
 on:
   push:
-    branches-ignore:
-      - '**'
     # Pushes to the canary or private-ci branches run their own workflows.
     branches-ignore:
+      - '**'
       - public-canary
       - private-canary
       - 'private-ci/**'
