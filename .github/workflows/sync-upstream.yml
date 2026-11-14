@@ -9,7 +9,6 @@ on:
 permissions:
   actions: write
   contents: write
-  workflows: write
 
 jobs:
   sync:
@@ -28,6 +27,8 @@ jobs:
           git remote add upstream https://github.com/telegramdesktop/tdesktop.git
           git fetch --no-tags --depth=150 upstream dev
           git merge --no-edit --no-ff upstream/dev
+          git checkout HEAD^ -- .github/workflows
+          git commit --amend --no-edit
           git push origin HEAD:dev
 
       - name: Start Linux build
