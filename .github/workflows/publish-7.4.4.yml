@@ -29,10 +29,11 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" \
             "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/14119398456/zip" \
             -o linux-artifact.zip
-          unzip -q linux-artifact.zip
+          mkdir -p extracted
+          unzip -q linux-artifact.zip -d extracted
 
       - name: Package Linux build
-        run: zip -r Telegram-7.4.4-linux-x86_64.zip Telegram Updater
+        run: cd extracted && zip -r ../Telegram-7.4.4-linux-x86_64.zip .
 
       - name: Publish release
         env:
