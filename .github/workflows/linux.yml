@@ -71,16 +71,6 @@ jobs:
       IMAGE_TAG: tdesktop:centos_env
 
     steps:
-      - name: Check Telegram API credentials.
-        env:
-          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
-          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
-        run: |
-          if [ -z "$TDESKTOP_API_ID" ] || [ -z "$TDESKTOP_API_HASH" ]; then
-            echo "::error::Add TDESKTOP_API_ID and TDESKTOP_API_HASH under Settings > Secrets and variables > Actions before building."
-            exit 1
-          fi
-
       - name: Clone.
         uses: actions/checkout@v7
         with:
@@ -161,9 +151,6 @@ jobs:
 
       - name: Telegram Desktop build.
         if: env.ONLY_CACHE == 'false'
-        env:
-          TDESKTOP_API_ID: ${{ secrets.TDESKTOP_API_ID }}
-          TDESKTOP_API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
         run: |
           set -o pipefail
           DEFINE=""
@@ -183,17 +170,13 @@ jobs:
           -v ${{ env.CCACHE_DIR }}:/var/cache/ccache \
           -e CONFIG=Debug \
           -e CCACHE_SLOPPINESS=pch_defines,time_macros \
-          -e TDESKTOP_API_ID \
-          -e TDESKTOP_API_HASH \
           $IMAGE_TAG \
           env -u CCACHE_DISABLE /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
           -D CMAKE_CONFIGURATION_TYPES=Debug \
           -D CMAKE_C_FLAGS_DEBUG="-O0 -fpch-preprocess" \
           -D CMAKE_CXX_FLAGS_DEBUG="-O0 -fpch-preprocess" \
           -D CMAKE_COMPILE_WARNING_AS_ERROR=ON \
-          -D TDESKTOP_API_TEST=OFF \
-          -D TDESKTOP_API_ID="$TDESKTOP_API_ID" \
-          -D TDESKTOP_API_HASH="$TDESKTOP_API_HASH" \
+          -D TDESKTOP_API_TEST=ON \
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
           -D DESKTOP_APP_SPECIAL_TARGET=linux \
