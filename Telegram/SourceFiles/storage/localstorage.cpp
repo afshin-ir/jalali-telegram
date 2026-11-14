@@ -545,6 +545,10 @@ QString autoupdatePrefixFile() {
 const QString &readAutoupdatePrefixRaw() {
 	Expects(!Core::UpdaterDisabled());
 
+#ifdef TDESKTOP_JALALI_UPDATES
+	return AutoupdatePrefix(
+		"https://github.com/afshin-ir/jalali-telegram/releases/latest/download");
+#else
 	const auto &result = AutoupdatePrefix();
 	if (!result.isEmpty()) {
 		return result;
@@ -557,6 +561,7 @@ const QString &readAutoupdatePrefixRaw() {
 		}
 	}
 	return AutoupdatePrefix("https://td.telegram.org");
+#endif // TDESKTOP_JALALI_UPDATES
 }
 
 void writeAutoupdatePrefix(const QString &prefix) {

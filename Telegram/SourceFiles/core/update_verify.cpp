@@ -541,7 +541,18 @@ std::optional<Manifest> ParseVerifiedManifest(
 		SetError(error, QStringLiteral("Could not load the root key."));
 		return std::nullopt;
 	}
-	if (!VerifyEd25519(root.get(), json, signature)) {
+	auto verifiedSignature = signature;
+	if (verifiedSignature.size() != kRawSignatureSize) {
+		const auto decoded = QByteArray::fromBase64Encoding(
+			verifiedSignature,
+			QByteArray::AbortOnBase64DecodingErrors);
+		if (!decoded || decoded.decoded.size() != kRawSignatureSize) {
+			SetError(error, QStringLiteral("Bad manifest signature encoding."));
+			return std::nullopt;
+		}
+		verifiedSignature = decoded.decoded;
+	}
+	if (!VerifyEd25519(root.get(), json, verifiedSignature)) {
 		SetError(error, QStringLiteral("Bad manifest root signature."));
 		return std::nullopt;
 	}
@@ -598,7 +609,7 @@ std::optional<Manifest> ParseVerifiedManifest(
 	result.revoked = std::move(*revoked);
 
 	result.bytes = json;
-	result.signature = signature;
+	result.signature = verifiedSignature;
 	return result;
 }
 

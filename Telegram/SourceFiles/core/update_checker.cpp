@@ -1765,11 +1765,13 @@ void Updater::start(bool forceWait) {
 				&_httpImplementation,
 				std::make_unique<HttpChecker>(_testing));
 		}
+#ifndef TDESKTOP_JALALI_UPDATES
 		startImplementation(
 			&_mtpImplementation,
 			std::make_unique<MtpChecker>(
 				LookupCanaryPrivateSession(_session),
 				_testing));
+#endif // TDESKTOP_JALALI_UPDATES
 
 		_checking.fire({});
 	} else {

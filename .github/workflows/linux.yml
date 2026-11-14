@@ -2,6 +2,8 @@ name: Linux.
 
 on:
   push:
+    tags:
+      - 'v*'
     # Pushes to the canary or private-ci branches run their own workflows.
     branches-ignore:
       - public-canary
@@ -217,6 +219,52 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: out/Debug/artifact/
           retention-days: 1
+
+      - name: Build signed update and publish release.
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JALALI_UPDATE_SIGNING_KEY: ${{ secrets.JALALI_UPDATE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${JALALI_UPDATE_SIGNING_KEY}" ]; then
+            echo "::error::Add JALALI_UPDATE_SIGNING_KEY under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          key_file="$RUNNER_TEMP/jalali-update-signing-key.pem"
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s\\n' "$JALALI_UPDATE_SIGNING_KEY" > "$key_file"
+          chmod 600 "$key_file"
+
+          version=$(sed -n 's/^constexpr auto AppVersion = \\([0-9][0-9]*\\);/\\1/p' Telegram/SourceFiles/core/version.h)
+          app_version=$(sed -n 's/^constexpr auto AppVersionStr = "\\([^"]*\\)";/\\1/p' Telegram/SourceFiles/core/version.h)
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [ "$version" = "" ] || [ "$app_version" != "$tag_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME must match AppVersionStr ($app_version)."
+            exit 1
+          fi
+
+          out/Debug/Packer \\
+            -path out/Debug/artifact \\
+            -version "$version" \\
+            -channel stable \\
+            -keys-loc Telegram/Resources/update \\
+            -local-key "$key_file" \\
+            -local-key-id jalali-linux-1
+
+          package="td-update-linux-x64-$version"
+          test -s "$package"
+          feed="$RUNNER_TEMP/current"
+          printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\\n' "$version" "$package" > "$feed"
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$feed" "$package" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$feed" "$package" \\
+              --title "Telegram Desktop $app_version (Jalali Linux)" \\
+              --notes "نسخهٔ لینوکس تلگرام دسکتاپ با به‌روزرسانی امضاشده از مخزن جلالی."
+          fi
 
       - name: Save Telegram Desktop cache.
         if: >

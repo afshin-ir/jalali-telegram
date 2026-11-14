@@ -41,6 +41,9 @@ if (DESKTOP_APP_DISABLE_AUTOUPDATE)
     target_compile_definitions(Telegram PRIVATE TDESKTOP_DISABLE_AUTOUPDATE)
 endif()
 
+# This fork publishes Linux updates from its own signed GitHub feed.
+target_compile_definitions(Telegram PRIVATE TDESKTOP_JALALI_UPDATES)
+
 if (DESKTOP_APP_DISABLE_CRASH_REPORTS)
     target_compile_definitions(Telegram PRIVATE TDESKTOP_DISABLE_CRASH_REPORTS)
 endif()
