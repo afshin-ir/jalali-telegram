@@ -815,7 +815,7 @@ int main(int argc, char *argv[])
 
 	int32 resultCheckLen;
 	memcpy(&resultCheckLen, compressed.constData() + hSigLen + hShaLen + hPropsLen, hOriginalSizeLen);
-	if (resultCheckLen <= 0 || resultCheckLen > 1024 * 1024 * 1024) {
+	if (resultCheckLen <= 0) {
 		cout << "Bad result len: " << resultCheckLen << "\n";
 		return -1;
 	}
@@ -883,7 +883,7 @@ int main(int argc, char *argv[])
 
 	int32 resultCheckLen;
 	memcpy(&resultCheckLen, compressed.constData() + hSigLen + hShaLen, hOriginalSizeLen);
-	if (resultCheckLen <= 0 || resultCheckLen > 1024 * 1024 * 1024) {
+	if (resultCheckLen <= 0) {
 		cout << "Bad result len: " << resultCheckLen << "\n";
 		return -1;
 	}
