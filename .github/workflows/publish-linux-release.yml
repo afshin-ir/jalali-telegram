@@ -1,0 +1,76 @@
+name: Publish Linux release
+
+on:
+  workflow_run:
+    workflows: ["Linux."]
+    types: [completed]
+    branches: [dev]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the built revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^AppVersionStrSmall[[:space:]]*//p' Telegram/build/version)
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Skip an already published version
+        id: exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download Linux build
+        if: steps.exists.outputs.published != 'true'
+        uses: actions/download-artifact@v7
+        with:
+          name: Telegram
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+
+      - name: Package Linux build
+        if: steps.exists.outputs.published != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          zip -r "Telegram-$VERSION-linux-x86_64.zip" Telegram Updater
+
+      - name: Publish release
+        if: steps.exists.outputs.published != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.value }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          gh release create "$TAG" "Telegram-$VERSION-linux-x86_64.zip" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$HEAD_SHA" \
+            --title "Telegram Desktop $VERSION — تقویم جلالی" \
+            --notes "<div dir=\"rtl\">
+
+          ## تلگرام دسکتاپ با تقویم جلالی
+
+          نسخهٔ لینوکس تلگرام دسکتاپ، همگام با نسخهٔ بالادستی $VERSION، همراه با نمایش تاریخ‌های جلالی در پیام‌ها، گفت‌وگوها، گروه‌ها و کانال‌ها.
+
+          </div>"
