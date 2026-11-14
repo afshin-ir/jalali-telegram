@@ -179,6 +179,7 @@ jobs:
           -D TDESKTOP_API_TEST=ON \
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
+          -D DESKTOP_APP_SPECIAL_TARGET=ON \
           $DEFINE 2>&1 | tee "$RUNNER_TEMP/telegram-build.log"
 
       - name: Count ccache misses.
