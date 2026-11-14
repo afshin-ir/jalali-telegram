@@ -222,6 +222,7 @@ private:
 
 };
 
+#ifndef TDESKTOP_JALALI_UPDATES
 class MtpChecker : public Checker {
 public:
 	MtpChecker(base::weak_ptr<Main::Session> session, bool testing);
@@ -260,6 +261,7 @@ private:
 	MTP::WeakInstance _mtp;
 
 };
+#endif // TDESKTOP_JALALI_UPDATES
 
 #if !defined Q_OS_WIN && !defined Q_OS_MAC
 class FlatpakChecker : public Checker {
@@ -304,6 +306,7 @@ std::shared_ptr<Updater> GetUpdaterInstance() {
 	return result;
 }
 
+#ifndef TDESKTOP_JALALI_UPDATES
 [[nodiscard]] base::weak_ptr<Main::Session> LookupCanaryPrivateSession(
 		base::weak_ptr<Main::Session> fallback) {
 	if (BuildUpdateChannel != Updates::Channel::CanaryPrivate
@@ -323,6 +326,7 @@ std::shared_ptr<Updater> GetUpdaterInstance() {
 	}
 	return fallback;
 }
+#endif // TDESKTOP_JALALI_UPDATES
 
 QString UpdatesFolder() {
 	return cWorkingDir() + u"tupdates"_q;
@@ -1023,6 +1027,7 @@ void HttpLoaderActor::partFailed(QNetworkReply::NetworkError e) {
 	_parent->threadSafeFailed();
 }
 
+#ifndef TDESKTOP_JALALI_UPDATES
 MtpChecker::MtpChecker(
 	base::weak_ptr<Main::Session> session,
 	bool testing)
@@ -1360,6 +1365,8 @@ Fn<void(const MTP::Error &error)> MtpChecker::failHandler() {
 		fail();
 	};
 }
+
+#endif // TDESKTOP_JALALI_UPDATES
 
 #if !defined Q_OS_WIN && !defined Q_OS_MAC
 FlatpakChecker::FlatpakChecker(bool testing)
