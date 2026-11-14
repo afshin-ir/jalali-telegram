@@ -1,0 +1,50 @@
+name: Publish Linux 7.4.4 once
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/publish-7.4.4.yml
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the built revision
+        uses: actions/checkout@v7
+        with:
+          ref: 18f0584d610a9decf088ee672c1abacf96458275
+
+      - name: Download Linux build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: Telegram
+          run-id: 43594963507
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+
+      - name: Package Linux build
+        run: zip -r Telegram-7.4.4-linux-x86_64.zip Telegram Updater
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > RELEASE_NOTES.md <<'NOTES'
+          <div dir="rtl">
+
+          ## تلگرام دسکتاپ با تقویم جلالی — نسخهٔ ۷٫۴٫۴
+
+          نسخهٔ لینوکس همگام با نسخهٔ پایدار تلگرام دسکتاپ، همراه با نمایش تاریخ‌های جلالی در پیام‌ها، گفت‌وگوها، گروه‌ها و کانال‌ها.
+
+          </div>
+          NOTES
+          gh release create v7.4.4 Telegram-7.4.4-linux-x86_64.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 18f0584d610a9decf088ee672c1abacf96458275 \
+            --title "Telegram Desktop 7.4.4 — تقویم جلالی" \
+            --notes-file RELEASE_NOTES.md
