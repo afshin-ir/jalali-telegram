@@ -190,16 +190,6 @@ jobs:
             && fromJSON(steps.ccache-stats.outputs.misses) > 300
         run: ccache --evict-older-than 1d
 
-      - name: Save Telegram Desktop cache.
-        if: >
-          env.ONLY_CACHE == 'false'
-            && github.ref_name == github.event.repository.default_branch
-            && fromJSON(steps.ccache-stats.outputs.misses) > 300
-        uses: actions/cache/save@v6
-        with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ${{ steps.cache-tdesktop.outputs.cache-primary-key }}
-
       - name: Check.
         if: env.ONLY_CACHE == 'false'
         run: |
@@ -227,6 +217,17 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}
           path: out/Debug/artifact/
           retention-days: 1
+
+      - name: Save Telegram Desktop cache.
+        if: >
+          success()
+            && env.ONLY_CACHE == 'false'
+            && github.ref_name == github.event.repository.default_branch
+            && fromJSON(steps.ccache-stats.outputs.misses) > 0
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ steps.cache-tdesktop.outputs.cache-primary-key }}
 
       - name: Upload Linux build log.
         if: always() && env.ONLY_CACHE == 'false'
