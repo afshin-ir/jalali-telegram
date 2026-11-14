@@ -260,13 +260,21 @@ jobs:
 
           package="td-update-linux-x64-$version"
           test -s "$package"
+
+          # A first-time manual install needs a normal archive; the signed
+          # td-update file above is only for the in-app updater.
+          install_archive="Telegram-$app_version-linux-x64.tar.xz"
+          tar -I 'xz -T0 -6' -cf "$install_archive" \
+            -C out/Debug/artifact Telegram Updater
+          test -s "$install_archive"
+
           feed="$RUNNER_TEMP/current"
           printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\n' "$version" "$package" > "$feed"
 
           if gh release view jalali-latest >/dev/null 2>&1; then
-            gh release upload jalali-latest "$feed" "$package" --clobber
+            gh release upload jalali-latest "$feed" "$package" "$install_archive" --clobber
           else
-            gh release create jalali-latest "$feed" "$package" \
+            gh release create jalali-latest "$feed" "$package" "$install_archive" \
               --title "Telegram Desktop $app_version (Jalali Linux)" \
               --notes "Latest signed Linux build of the Jalali Telegram Desktop fork."
           fi
