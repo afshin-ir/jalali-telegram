@@ -388,7 +388,7 @@ QString FindUpdateFile() {
 	return result;
 }
 
-void AdoptManifest(const Updates::Manifest &manifest) {
+[[maybe_unused]] void AdoptManifest(const Updates::Manifest &manifest) {
 	const auto held = HeldManifest();
 	if (!held || manifest.version > held->version) {
 		LOG(("Update Info: Adopting manifest version %1."
