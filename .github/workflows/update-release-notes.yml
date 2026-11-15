@@ -6,6 +6,8 @@ on:
       - dev
     paths:
       - RELEASE_NOTES_FA.md
+      - Telegram/SourceFiles/core/version.h
+      - .github/workflows/update-release-notes.yml
   workflow_dispatch:
 
 permissions:
@@ -18,7 +20,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Update the rolling release description
+      - name: Update the rolling release title and description
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release edit jalali-latest --notes-file RELEASE_NOTES_FA.md
+        run: |
+          app_version=$(sed -n 's/^constexpr auto AppVersionStr = "\([^"]*\)";/\1/p' Telegram/SourceFiles/core/version.h)
+          if [ -z "$app_version" ]; then
+            echo "::error::Could not read AppVersionStr from Telegram/SourceFiles/core/version.h."
+            exit 1
+          fi
+
+          fa_version=$(python3 -c "import sys; print(sys.argv[1].translate(str.maketrans('0123456789.', '۰۱۲۳۴۵۶۷۸۹٫')))" "$app_version")
+          release_title="تلگرام دسکتاپ $fa_version (لینوکس جلالی)"
+          gh release edit jalali-latest --title "$release_title" --notes-file RELEASE_NOTES_FA.md
