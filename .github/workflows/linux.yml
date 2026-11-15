@@ -48,7 +48,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: linux-${{ github.ref }}
@@ -168,15 +168,16 @@ jobs:
           -u $(id -u) \
           -v $PWD:/usr/src/tdesktop \
           -v ${{ env.CCACHE_DIR }}:/var/cache/ccache \
-          -e CONFIG=Release \
+          -e CONFIG=Debug \
           -e CCACHE_SLOPPINESS=pch_defines,time_macros \
           $IMAGE_TAG \
           env -u CCACHE_DISABLE /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
-          -D CMAKE_CONFIGURATION_TYPES=Release \
-          -D CMAKE_COMPILE_WARNING_AS_ERROR=OFF \
-          -D CMAKE_CXX_FLAGS="-Wno-error=aggressive-loop-optimizations" \
+          -D CMAKE_CONFIGURATION_TYPES=Debug \
+          -D CMAKE_C_FLAGS_DEBUG="-O0 -fpch-preprocess" \
+          -D CMAKE_CXX_FLAGS_DEBUG="-O0 -fpch-preprocess" \
+          -D CMAKE_COMPILE_WARNING_AS_ERROR=ON \
           -D TDESKTOP_API_TEST=ON \
-          -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
+          -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF \
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
           -D DESKTOP_APP_SPECIAL_TARGET=linux \
           $DEFINE 2>&1 | tee "$RUNNER_TEMP/telegram-build.log"
@@ -223,7 +224,60 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: out/Debug/artifact/
-          retention-days: 30
+          retention-days: 1
+
+      - name: Build signed update and publish rolling release.
+        if: github.ref == 'refs/heads/dev'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JALALI_UPDATE_SIGNING_KEY: ${{ secrets.JALALI_UPDATE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${JALALI_UPDATE_SIGNING_KEY}" ]; then
+            echo "::error::Add JALALI_UPDATE_SIGNING_KEY under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          key_file="$RUNNER_TEMP/jalali-update-signing-key.pem"
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s\n' "$JALALI_UPDATE_SIGNING_KEY" > "$key_file"
+          chmod 600 "$key_file"
+
+          version=$(sed -n 's/^constexpr auto AppVersion = \([0-9][0-9]*\);/\1/p' Telegram/SourceFiles/core/version.h)
+          app_version=$(sed -n 's/^constexpr auto AppVersionStr = "\([^"]*\)";/\1/p' Telegram/SourceFiles/core/version.h)
+          if [ "$version" = "" ]; then
+            echo "::error::Could not read AppVersion from Telegram/SourceFiles/core/version.h."
+            exit 1
+          fi
+
+          out/Debug/Packer \
+            -path out/Debug/artifact \
+            -version "$version" \
+            -channel stable \
+            -keys-loc Telegram/Resources/update \
+            -local-key "$key_file" \
+            -local-key-id jalali-linux-1
+
+          package="td-update-linux-x64-$version"
+          test -s "$package"
+
+          # A first-time manual install needs a normal archive; the signed
+          # td-update file above is only for the in-app updater.
+          install_archive="Telegram-$app_version-linux-x64.tar.xz"
+          tar -I 'xz -T0 -6' -cf "$install_archive" \
+            -C out/Debug/artifact Telegram Updater
+          test -s "$install_archive"
+
+          feed="$RUNNER_TEMP/current"
+          printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\n' "$version" "$package" > "$feed"
+
+          if gh release view jalali-latest >/dev/null 2>&1; then
+            gh release upload jalali-latest "$feed" "$package" "$install_archive" --clobber
+          else
+            gh release create jalali-latest "$feed" "$package" "$install_archive" \
+              --title "Telegram Desktop $app_version (Jalali Linux)" \
+              --notes "Latest signed Linux build of the Jalali Telegram Desktop fork."
+          fi
 
       - name: Save Telegram Desktop cache.
         if: >
