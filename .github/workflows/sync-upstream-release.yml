@@ -40,9 +40,47 @@ jobs:
                 git add -- "$path"
               done <<< "$workflow_conflicts"
             fi
+            if printf '%s\n' "$conflicts" | grep -qx 'README.md'; then
+              git checkout --ours -- README.md
+              git add README.md
+            fi
+
+            # Preserve the Jalali month heading while taking the upstream
+            # Qt platform macro update in update_checker.cpp.
+            python3 - <<'PY'
+            from pathlib import Path
+            import re
+
+            def resolve(path, choose):
+                p = Path(path)
+                text = p.read_text()
+                pattern = re.compile(
+                    r"(?m)^<<<<<<< [^\n]*\n(.*?)^=======\n(.*?)^>>>>>>> [^\n]*\n?",
+                    re.S,
+                )
+                matches = list(pattern.finditer(text))
+                if not matches:
+                    raise SystemExit(f"Expected conflict markers in {path}")
+                def replacement(match):
+                    ours, theirs = match.group(1), match.group(2)
+                    return choose(ours, theirs)
+                p.write_text(pattern.sub(replacement, text))
+
+            resolve(
+                "Telegram/SourceFiles/core/update_checker.cpp",
+                lambda ours, theirs: ours.replace("Q_OS_MAC", "Q_OS_MACOS"),
+            )
+            resolve(
+                "Telegram/SourceFiles/ui/boxes/calendar_box.cpp",
+                lambda ours, theirs: ours,
+            )
+            PY
+            git add Telegram/SourceFiles/core/update_checker.cpp
+            git add Telegram/SourceFiles/ui/boxes/calendar_box.cpp
+
             unresolved=$(git diff --name-only --diff-filter=U)
             if [ -n "$unresolved" ]; then
-              echo "::error::Source conflicts need manual resolution:"
+              echo "::error::Unresolved merge conflicts:"
               printf '%s\n' "$unresolved"
               git merge --abort
               exit 1
