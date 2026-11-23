@@ -72,6 +72,7 @@ public:
 	void setMarkedText(TextWithEntities text);
 
 protected:
+	void mousePressEvent(QMouseEvent *e) override;
 	void paintEvent(QPaintEvent *e) override;
 
 	QImage prepareRippleMask() const override;
@@ -101,6 +102,14 @@ RepeatButton::RepeatButton(not_null<QWidget*> parent)
 
 void RepeatButton::setMarkedText(TextWithEntities text) {
 	_label->setMarkedText(std::move(text));
+}
+
+void RepeatButton::mousePressEvent(QMouseEvent *e) {
+	if (e->button() != Qt::LeftButton) {
+		return RippleButton::mousePressEvent(e);
+	}
+	e->accept();
+	clicked(e->modifiers(), e->button());
 }
 
 void RepeatButton::paintEvent(QPaintEvent *e) {
@@ -445,6 +454,9 @@ object_ptr<Ui::RpWidget> ChooseRepeatPeriod(
 				anchor.x() - menu->width() / 2,
 				menu->y()
 					- Ui::BoxShadow::ExtendFor(menu->st().shadow).bottom());
+			if (QGuiApplication::mouseButtons() & Qt::LeftButton) {
+				menu->menu()->handlePressedOutside(QCursor::pos());
+			}
 			menu->popupPrepared();
 		}
 	});

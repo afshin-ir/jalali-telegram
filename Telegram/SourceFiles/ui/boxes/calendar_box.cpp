@@ -18,6 +18,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/cached_round_corners.h"
 #include "ui/layers/generic_box.h"
 #include "ui/dynamic_image.h"
+#include "ui/text/text_utilities.h"
 #include "lang/lang_keys.h"
 #include "base/flat_map.h"
 #include "base/flat_set.h"
@@ -98,6 +99,12 @@ constexpr auto kJumpDelay = 2 * crl::time(1000);
 // QDate -> 0..6
 [[nodiscard]] int DayOfWeekIndex(const QDate &date, int firstDayOfWeek) {
 	return (kDaysInWeek + date.dayOfWeek() - firstDayOfWeek) % kDaysInWeek;
+}
+
+// The month titles the view, even where months are lowercase.
+[[nodiscard]] QString MonthTitle(QDate month) {
+	return Text::Capitalized(
+		langMonthOfYearFull(month.month(), month.year()));
 }
 
 void FillMonthYearPicker(
