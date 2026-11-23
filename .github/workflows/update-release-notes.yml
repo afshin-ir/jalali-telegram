@@ -9,16 +9,24 @@ on:
       - Telegram/SourceFiles/core/version.h
       - .github/workflows/update-release-notes.yml
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Linux.
+    types:
+      - completed
 
 permissions:
   contents: write
 
 jobs:
   update-release-notes:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          ref: dev
 
       - name: Update the rolling release title and description
         env:
