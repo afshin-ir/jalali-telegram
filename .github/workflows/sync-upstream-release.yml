@@ -1,0 +1,86 @@
+name: همگام‌سازی تلگرام اصلی و ساخت لینوکس
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - .github/workflows/sync-upstream-release.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  sync-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: دریافت فورک
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: ادغام نسخهٔ رسمی ۷٫۴٫۶ و حفظ تغییرات جلالی
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/telegramdesktop/tdesktop.git
+          git fetch upstream refs/tags/v7.4.6:refs/tags/upstream-v7.4.6
+
+          if ! git merge --no-ff --no-edit refs/tags/upstream-v7.4.6; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            workflow_conflicts=$(printf '%s\n' "$conflicts" | grep '^.github/workflows/' || true)
+            if [ -n "$workflow_conflicts" ]; then
+              while IFS= read -r path; do
+                [ -n "$path" ] || continue
+                git checkout --ours -- "$path"
+                git add -- "$path"
+              done <<< "$workflow_conflicts"
+            fi
+            unresolved=$(git diff --name-only --diff-filter=U)
+            if [ -n "$unresolved" ]; then
+              echo "::error::Source conflicts need manual resolution:"
+              printf '%s\n' "$unresolved"
+              git merge --abort
+              exit 1
+            fi
+            git commit --no-edit
+          fi
+
+          # Keep the fork's Linux-only and Persian release workflows.
+          git checkout HEAD^ -- .github/workflows
+          git add .github/workflows
+
+          cat > RELEASE_NOTES_FA.md <<'NOTES'
+          <div dir="rtl" align="right">
+
+          # تلگرام دسکتاپ ۷٫۴٫۶ با تقویم جلالی — لینوکس
+
+          این فورک لینوکسی، تاریخ‌ها را در بخش‌های اصلاح‌شدهٔ تلگرام با تقویم هجری شمسی و ترتیب «روز، نام ماه، سال» نمایش می‌دهد.
+
+          ## تغییرات تلگرام اصلی از ۷٫۴٫۱ تا ۷٫۴٫۶
+
+          - **۷٫۴٫۱ تا ۷٫۴٫۴:** رفع اشکال‌ها و بهبودهای جزئی؛ از جمله اصلاح فیلتر تاریخ در خروجی گفتگو، گزینه‌های ارسال در پیش‌نمایش گفتگو، انتخاب چند پراکسی و مخاطب، و رفع چند کرش و هنگ.
+          - **۷٫۴٫۵:** امکان انتشار استوری و به‌روزرسانی Qt به نسخهٔ ۶٫۱۲ و دیگر وابستگی‌ها، همراه با رفع اشکال.
+          - **۷٫۴٫۶:** امکان پیش‌نویس و انتشار استوری، پیش‌نمایش استوری ربات‌ها، خریدوفروش هدیه‌های زنجیره‌ای از بخش پول و بهبود ایمنی و جداسازی پردازش ابزارک‌های HTML.
+
+          ## منابع رسمی
+
+          - [یادداشت انتشار ۷٫۴٫۵](https://github.com/telegramdesktop/tdesktop/releases/tag/v7.4.5)
+          - [یادداشت انتشار ۷٫۴٫۶](https://github.com/telegramdesktop/tdesktop/releases/tag/v7.4.6)
+          - [مقایسهٔ نسخه‌های ۷٫۴٫۴ و ۷٫۴٫۶](https://github.com/telegramdesktop/tdesktop/compare/v7.4.4...v7.4.6)
+
+          </div>
+          NOTES
+
+          git add RELEASE_NOTES_FA.md
+          git commit --amend --no-edit
+          git push origin HEAD:dev
+
+      - name: آغاز بیلد لینوکس
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run linux.yml --ref dev
