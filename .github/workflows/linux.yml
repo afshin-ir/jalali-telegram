@@ -271,12 +271,15 @@ jobs:
           feed="$RUNNER_TEMP/current"
           printf '{"linux":{"stable":{"released":%s,"link":"%s"}}}\n' "$version" "$package" > "$feed"
 
+          fa_version=$(python3 -c "import sys; print(sys.argv[1].translate(str.maketrans('0123456789.', '۰۱۲۳۴۵۶۷۸۹٫')))" "$app_version")
+          release_title="تلگرام دسکتاپ $fa_version (لینوکس جلالی)"
           if gh release view jalali-latest >/dev/null 2>&1; then
             gh release upload jalali-latest "$feed" "$package" "$install_archive" --clobber
+            gh release edit jalali-latest --title "$release_title" --notes-file RELEASE_NOTES_FA.md
           else
             gh release create jalali-latest "$feed" "$package" "$install_archive" \
-              --title "Telegram Desktop $app_version (Jalali Linux)" \
-              --notes "Latest signed Linux build of the Jalali Telegram Desktop fork."
+              --title "$release_title" \
+              --notes-file RELEASE_NOTES_FA.md
           fi
 
       - name: Save Telegram Desktop cache.
