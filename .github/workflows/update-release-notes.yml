@@ -1,11 +1,12 @@
-name: Update Persian rolling release notes
+name: Update English release titles and notes
 
 on:
   push:
     branches:
       - dev
     paths:
-      - RELEASE_NOTES_FA.md
+      - RELEASE_NOTES_EN.md
+      - RELEASE_NOTES_7.4.1_EN.md
       - Telegram/SourceFiles/core/version.h
       - .github/workflows/update-release-notes.yml
   workflow_dispatch:
@@ -28,7 +29,7 @@ jobs:
         with:
           ref: dev
 
-      - name: Update the rolling release title and description
+      - name: Update English release titles and descriptions
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -38,6 +39,6 @@ jobs:
             exit 1
           fi
 
-          fa_version=$(python3 -c "import sys; print(sys.argv[1].translate(str.maketrans('0123456789.', '۰۱۲۳۴۵۶۷۸۹٫')))" "$app_version")
-          release_title="تلگرام دسکتاپ $fa_version (لینوکس جلالی)"
-          gh release edit jalali-latest --title "$release_title" --notes-file RELEASE_NOTES_FA.md
+          release_title="Telegram Desktop $app_version (Jalali Linux)"
+          gh release edit jalali-latest --title "$release_title" --notes-file RELEASE_NOTES_EN.md
+          gh release edit v7.4.1 --title "Telegram Desktop 7.4.1 with Jalali Calendar — First Stable Release" --notes-file RELEASE_NOTES_7.4.1_EN.md
