@@ -1,56 +1,53 @@
-<h1 dir="rtl" align="right">تلگرام جلالی برای لینوکس</h1>
+# Telegram Desktop with Jalali Calendar (Linux)
 
-<p dir="rtl" align="right">
-این مخزن نسخه‌ای غیررسمی از تلگرام دسکتاپ است که نمایش تاریخ‌ها را به تقویم جلالی مجهز می‌کند. شمارهٔ نسخه با نسخهٔ اصلی تلگرام دسکتاپ هماهنگ است؛ نسخهٔ فعلی این فورک <strong>۷٫۴٫۱</strong> است.
-</p>
+An unofficial Linux fork of [Telegram Desktop](https://github.com/telegramdesktop/tdesktop) that displays dates using the Persian (Jalali/Solar Hijri) calendar. Fork releases follow the upstream Telegram Desktop version number. The current release is **7.4.6**.
 
-<h2 dir="rtl" align="right">قابلیت افزوده‌شده</h2>
+## Jalali calendar implementation
 
-<ul dir="rtl" align="right">
-<li>تاریخ پیام‌های دریافت‌شده و فرستاده‌شده در گفت‌وگوهای دونفره، گروه‌ها و کانال‌ها به جلالی نمایش داده می‌شود.</li>
-<li>انتخابگر تاریخ نیز جلالی است: نام ماه، سال و روزهای ماه بر اساس تقویم جلالی نمایش داده می‌شوند.</li>
-<li>تاریخ نشست‌های فعال و تاریخ تولد در نمایه نیز جلالی نمایش داده می‌شوند.</li>
-<li>ترتیب تاریخ به صورت «روز، ماه، سال» است؛ برای نمونه: <strong>۱۷ آبان ۱۴۰۵</strong>.</li>
-<li>زمان پیام مطابق ساعت محلی دستگاه نمایش داده می‌شود. تبدیل به جلالی فقط شکل نمایش تاریخ را عوض می‌کند و مقدار زمانی اصلی پیام حفظ می‌شود.</li>
-</ul>
+The fork keeps Telegram Desktop's existing custom calendar UI; it does not replace it with Qt's calendar widget. Shared formatting helpers use Qt 6's `QCalendar::System::Jalali` to obtain Jalali year, month, and day components from `QDate` values. They provide Persian month names, Persian digit conversion, and day–month–year formatting. A companion helper formats full date-times.
 
-<h2 dir="rtl" align="right">نمونه‌های نمایش تاریخ جلالی</h2>
+The Jalali conversion is applied across the date-related UI, including:
 
-<p dir="rtl" align="right">نمایش ماه‌ها و روزهای آن ماه:</p>
-<p align="center"><img src="docs/assets/jalali-message-date.png" alt="نمایش تاریخ جلالی کنار پیام" width="360"></p>
+- Chat-list dates and message dates in private chats, groups, and channels.
+- Message timestamps, date separators, tooltips, and edited or forwarded dates.
+- Scheduled-message date selection and the custom calendar and month/year pickers.
+- Birthdays and profile details, last-seen dates, and active-session dates.
+- Other date displays, including saved-media dates.
 
-<p dir="rtl" align="right">نمایش روز، ماه و سال در کنار هر پیام:</p>
-<p align="center"><img src="docs/assets/jalali-calendar.png" alt="تقویم جلالی با روزهای ماه" width="420"></p>
+The underlying timestamps and stored date values are not changed. Jalali conversion is used for display and calendar selection. Dates are shown in **day, month, year** order, for example: **17 Aban 1405**.
 
-<p dir="rtl" align="right">انتخاب ماه و سال جلالی:</p>
-<p align="center"><img src="docs/assets/jalali-month-year-picker.png" alt="انتخاب ماه و سال جلالی" width="420"></p>
+## Screenshots
 
-<h2 dir="rtl" align="right">دریافت نسخهٔ لینوکس</h2>
+Jalali date beside a message:
 
-<p dir="rtl" align="right">
-<a href="https://github.com/afshin-ir/jalali-telegram/releases/tag/v7.4.1">دریافت تلگرام جلالی ۷٫۴٫۱ برای لینوکس</a>
-</p>
+![Jalali date beside a message](docs/assets/jalali-message-date.png)
 
-<p dir="rtl" align="right">
-این فورک در حال حاضر فقط برای لینوکس بسته‌بندی می‌شود. فایل فشردهٔ نسخه را دریافت و استخراج کنید؛ سپس فایل <code>Telegram</code> را اجرا کنید.
-</p>
+Jalali calendar grid:
 
-<pre dir="ltr"><code>unzip Telegram-7.4.1-linux-x86_64.zip -d telegram-jalali
-cd telegram-jalali
-./Telegram</code></pre>
+![Jalali calendar grid](docs/assets/jalali-calendar.png)
 
-<h2 dir="rtl" align="right">شماره‌گذاری نسخه‌ها</h2>
+Jalali month and year picker:
 
-<p dir="rtl" align="right">
-شماره‌گذاری این فورک از نسخهٔ اصلی تلگرام دسکتاپ پیروی می‌کند. تغییرات مربوط به تقویم جلالی شمارهٔ نسخهٔ مستقل ندارند؛ بنابراین این انتشار بر پایهٔ تلگرام دسکتاپ ۷٫۴٫۱ با شمارهٔ ۷٫۴٫۱ ارائه می‌شود.
-</p>
+![Jalali month and year picker](docs/assets/jalali-month-year-picker.png)
 
-<h2 dir="rtl" align="right">دربارهٔ پروژه و مجوز</h2>
+## Download for Linux
 
-<p dir="rtl" align="right">
-این پروژه فورکی غیررسمی از <a href="https://github.com/telegramdesktop/tdesktop">کد منبع تلگرام دسکتاپ</a> است و وابستگی یا تأیید رسمی از سوی تلگرام ندارد. کد منبع تلگرام دسکتاپ تحت مجوز <a href="https://github.com/afshin-ir/jalali-telegram/blob/dev/LICENSE">GPL نسخهٔ ۳</a> با استثنای OpenSSL منتشر شده است. تغییرات این فورک نیز در همان چارچوب مجوز منتشر می‌شوند.
-</p>
+[Download Telegram Desktop 7.4.6 with Jalali dates](https://github.com/afshin-ir/jalali-telegram/releases/download/jalali-latest/Telegram-7.4.6-linux-x64.tar.xz)
 
-<p dir="rtl" align="right">
-برای گزارش اشکال یا پیشنهاد، از <a href="https://github.com/afshin-ir/jalali-telegram/issues">بخش درخواست‌ها و اشکال‌های مخزن</a> استفاده کنید.
-</p>
+This fork currently publishes Linux builds only. Extract the downloaded archive and run the `Telegram` executable from the extracted directory.
+
+For the build status, see [GitHub Actions](https://github.com/afshin-ir/jalali-telegram/actions).
+
+## Versioning
+
+Fork version numbers match the corresponding upstream Telegram Desktop release. The current fork release is based on Telegram Desktop **7.4.6**; the Jalali changes do not use a separate version number.
+
+## Upstream changes
+
+See the [upstream Telegram Desktop release notes](https://github.com/telegramdesktop/tdesktop/releases) for changes made by the Telegram Desktop developers.
+
+## License and project status
+
+This is an unofficial fork of [Telegram Desktop](https://github.com/telegramdesktop/tdesktop). It is not affiliated with or endorsed by Telegram. Telegram Desktop is licensed under [GPL-3.0 with the OpenSSL exception](https://github.com/afshin-ir/jalali-telegram/blob/dev/LICENSE); changes in this fork are distributed under the same license.
+
+To report an issue or suggest an improvement, use the [issues page](https://github.com/afshin-ir/jalali-telegram/issues).
