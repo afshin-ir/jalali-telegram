@@ -101,12 +101,6 @@ constexpr auto kJumpDelay = 2 * crl::time(1000);
 	return (kDaysInWeek + date.dayOfWeek() - firstDayOfWeek) % kDaysInWeek;
 }
 
-// The month titles the view, even where months are lowercase.
-[[nodiscard]] QString MonthTitle(QDate month) {
-	return Text::Capitalized(
-		langMonthOfYearFull(month.month(), month.year()));
-}
-
 void FillMonthYearPicker(
 		not_null<GenericBox*> box,
 		QDate current,
